@@ -1,0 +1,82 @@
+## Phase 4: 저장소 레이어 - CSV 데이터 관리 (7단계 중 4단계)
+
+---
+
+Phase 4: 검색 결과를 CSV 파일로 저장하고 불러오는 저장소 레이어를 구현합니다.
+
+### 1. 검색 결과 리포지토리 (repositories/search_repository.py)
+
+#### `save_result(result: SearchResult) -> bool`
+- `result.to_dataframe()`을 호출하여 DataFrame을 얻습니다.
+- `settings.CSV_PATH` 경로의 파일에 데이터를 추가(append)합니다.
+- **구현 세부사항:**
+  - 파일이 존재하지 않으면 헤더를 포함하여 새로 생성합니다.
+  - 파일이 이미 존재하면 헤더 없이 데이터를 아래에 추가합니다.
+  - 저장 시 `index=False` 옵션을 사용합니다.
+  - 한국어 깨짐 방지를 위해 `encoding="utf-8-sig"`를 사용합니다.
+- 성공 시 `True`, 실패 시 `AppError("file_error")`를 발생시킵니다.
+
+#### `load_results() -> pd.DataFrame`
+- `settings.CSV_PATH` 파일을 읽어 전체 검색 이력을 반환합니다.
+- 파일이 없으면 빈 DataFrame(명시된 컬럼 구조 포함)을 반환합니다.
+- 읽기 실패 시 `AppError("file_error")`를 발생시킵니다.
+
+---
+
+### 2. 데이터 구조 (CSV 컬럼)
+
+저장되는 데이터는 다음 컬럼 구조를 가져야 합니다:
+
+| 컬럼명 | 타입 | 설명 |
+|--------|------|------|
+| search_key | string | PK, "키워드-yyyymmddhhmm" |
+| search_time | datetime | 검색 실행 시간 |
+| keyword | string | 검색 키워드 |
+| article_index | int | 기사 순번 (1부터) |
+| title | string | 기사 제목 |
+| url | string | 기사 URL |
+| snippet | string | 기사 스니펫 |
+| ai_summary | string | AI 요약 결과 |
+
+**참고:** `SearchResult.to_dataframe()` 메서드가 위 구조(특히 `article_index` 포함)에 맞게 구현되어 있어야 합니다.
+
+---
+
+### 3. 구현 요구사항
+- `pandas` 라이브러리를 사용합니다.
+- `config.settings`의 `CSV_PATH`를 참조합니다.
+- `utils.exceptions.AppError`를 사용하여 예외를 처리합니다.
+
+---
+
+### 4. 검증 방법
+
+```bash
+# 리포지토리 import 테스트
+python -c "from repositories.search_repository import save_result, load_results; print('search_repository import 성공')"
+
+# 데이터 저장 테스트 (임시 데이터 사용)
+python -c "from domain.search_result import SearchResult; from domain.news_article import NewsArticle; from repositories.search_repository import save_result; from datetime import datetime; res = SearchResult('테스트-123', datetime.now(), '테스트', [NewsArticle('제목', 'url', '스니펫')], '요약'); save_result(res); print('저장 테스트 완료')"
+```
+
+---
+
+### 5. 검증 포인트
+
+- [ ] `from repositories.search_repository import save_result` import 성공
+- [ ] `save_result()` 호출 시 CSV 파일이 생성되거나 데이터가 추가됨
+- [ ] CSV 파일의 인코딩이 `utf-8-sig`로 저장되어 엑셀에서 한글이 깨지지 않음
+- [ ] `load_results()` 호출 시 저장된 데이터를 DataFrame으로 정상 로드함
+- [ ] 컬럼명과 순서가 명세와 일치함 (article_index 포함)
+
+---
+
+### ⚠️ 필수 요구사항: 한글 사용
+
+**모든 에러 메시지와 안내 텍스트는 한글로 작성해주세요.**
+
+---
+
+### 🚫 금지사항: Git/GitHub 작업 금지
+
+**Git 및 GitHub 관련 작업은 일절 하지 마세요.**
